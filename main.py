@@ -45,36 +45,152 @@ HOST = '127.0.0.1'  # 监听本地（必须通过Nginx反代，不直接暴露�
 PORT = 80            # 服务端口（可通过环境变量覆盖）
 # 静态资源：适配仓库根目录favicon.ico（不依赖外部CDN）
 FAVICON_PATH = os.path.join(os.path.dirname(__file__), 'favicon.ico')
-# 主页HTML（保留完整表单功能，不简化界面逻辑）
+# -------------------------- 核心优化：INDEX_HTML（贴近原版gh-proxy风格）--------------------------
 INDEX_HTML = '''
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>gyjune/mirror - GitHub代理</title>
+    <title>GitHub Proxy by gyjune/mirror</title>
     <link rel="icon" href="/favicon.ico" type="image/vnd.microsoft.icon">
     <style>
-        body { max-width: 800px; margin: 2rem auto; padding: 0 1rem; font-family: Arial, sans-serif; }
-        h1 { color: #24292e; text-align: center; }
-        .form-container { margin-top: 2rem; }
-        #url-input { width: 70%; padding: 0.8rem; font-size: 1rem; border: 1px solid #ddd; border-radius: 4px 0 0 4px; }
-        #submit-btn { padding: 0.8rem 1.5rem; font-size: 1rem; background: #2ea44f; color: white; border: none; border-radius: 0 4px 4px 0; cursor: pointer; }
-        #submit-btn:hover { background: #22863a; }
-        .note { margin-top: 1.5rem; color: #666; font-size: 0.9rem; text-align: center; }
+        /* 原版风格：简洁黑白灰配色，紧凑布局 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #fafbfc; 
+            color: #24292e; 
+            line-height: 1.5; 
+            padding: 2rem 1rem;
+        }
+        .container { 
+            max-width: 700px; 
+            margin: 0 auto; 
+        }
+        /* 标题：贴近原版粗体+灰色副标题 */
+        h1 { 
+            font-size: 2rem; 
+            font-weight: 600; 
+            margin-bottom: 0.5rem; 
+            color: #24292e;
+        }
+        .subtitle { 
+            font-size: 1rem; 
+            color: #6a737d; 
+            margin-bottom: 2rem; 
+            font-weight: 400;
+        }
+        /* 输入框组：原版横向紧凑布局 */
+        .input-group { 
+            display: flex; 
+            width: 100%; 
+            margin-bottom: 1.5rem; 
+        }
+        #url-input { 
+            flex: 1; 
+            padding: 0.75rem 1rem; 
+            font-size: 1rem; 
+            border: 1px solid #d1d5da; 
+            border-right: none; 
+            border-radius: 3px 0 0 3px; 
+            outline: none;
+        }
+        #url-input:focus { 
+            border-color: #0366d6; 
+            box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1); 
+        }
+        #submit-btn { 
+            padding: 0 1.25rem; 
+            font-size: 1rem; 
+            background: #0366d6; 
+            color: white; 
+            border: none; 
+            border-radius: 0 3px 3px 0; 
+            cursor: pointer; 
+            font-weight: 500;
+        }
+        #submit-btn:hover { 
+            background: #0256b3; 
+        }
+        /* 支持列表：原版灰色小字体+项目符号 */
+        .support-list { 
+            font-size: 0.875rem; 
+            color: #6a737d; 
+            margin-bottom: 2rem; 
+        }
+        .support-list h3 { 
+            font-size: 0.9rem; 
+            color: #24292e; 
+            margin-bottom: 0.5rem; 
+            font-weight: 600;
+        }
+        .support-list ul { 
+            list-style-type: disc; 
+            margin-left: 1.5rem; 
+        }
+        /* 底部说明：原版灰色细字体 */
+        .footer { 
+            font-size: 0.8rem; 
+            color: #959da5; 
+            border-top: 1px solid #eaecef; 
+            padding-top: 1rem; 
+            margin-top: 2rem;
+        }
+        .footer a { 
+            color: #0366d6; 
+            text-decoration: none; 
+        }
+        .footer a:hover { 
+            text-decoration: underline; 
+        }
     </style>
 </head>
 <body>
-    <h1>gyjune/mirror - GitHub代理服务</h1>
-    <div class="form-container" style="text-align: center;">
-        <form action="/" method="get">
-            <input type="text" id="url-input" name="q" placeholder="请输入GitHub链接（例：https://github.com/gyjune/mirror）" required>
-            <button type="submit" id="submit-btn">访问</button>
-        </form>
-    </div>
-    <div class="note">
-        支持场景：Releases下载、Blob文件预览、Raw文件下载、Gist内容、Git操作<br>
-        白名单限制：仅允许代理 gyjune、gyj07、gyj1980 相关仓库
+    <div class="container">
+        <!-- 标题区域：贴近原版格式 -->
+        <h1>GitHub Proxy</h1>
+        <p class="subtitle">gyjune/mirror 代理服务 · 加速GitHub资源访问</p>
+        
+        <!-- 输入表单：原版横向布局，无多余样式 -->
+        <div class="input-group">
+            <form action="/" method="get" style="width: 100%; display: flex;">
+                <input 
+                    type="text" 
+                    id="url-input" 
+                    name="q" 
+                    placeholder="输入GitHub链接（例：https://github.com/gyjune/mirror）" 
+                    required
+                    style="flex: 1;"
+                >
+                <button type="submit" id="submit-btn">Go</button>
+            </form>
+        </div>
+        
+        <!-- 支持场景：原版项目符号列表，简洁明了 -->
+        <div class="support-list">
+            <h3>支持资源类型：</h3>
+            <ul>
+                <li>GitHub Releases 安装包下载（.zip/.tar.gz）</li>
+                <li>GitHub Blob 代码文件预览/下载</li>
+                <li>Raw.githubusercontent.com 原始文件</li>
+                <li>Gist 代码片段访问</li>
+                <li>Git 仓库信息查询（info/git-* 接口）</li>
+            </ul>
+        </div>
+        
+        <div class="support-list">
+            <h3>白名单限制：</h3>
+            <ul>
+                <li>仅允许代理 gyjune、gyj07、gyj1980 账号下的仓库</li>
+                <li>单个文件大小限制：999GB（无感知限制）</li>
+            </ul>
+        </div>
+        
+        <!-- 底部说明：贴近原版版权+链接格式 -->
+        <div class="footer">
+            <p>基于 GitHub Proxy 项目修改 | <a href="https://github.com/gyjune/mirror" target="_blank">gyjune/mirror</a></p>
+        </div>
     </div>
 </body>
 </html>
